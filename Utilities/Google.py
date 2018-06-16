@@ -12,21 +12,21 @@ async def web_search(message, client):
     print('Searching web for: ' + search_query)
     search_query = search_query.replace(' ', '+')
 
-    search_url = Constants.GOOGLE_IMGSEARCH_HEAD_URL + "{}".format(search_query) # + IMGSEARCH_FOOT_URL
+    #language parameter can be added as first one in GOOGLE_IMGSEARCH_HEAD_URL.
+    search_url = Constants.GOOGLE_IMGSEARCH_HEAD_URL + "{}".format(search_query) + "&hl=en_US"# + IMGSEARCH_FOOT_URL
     search_response = requests.get(search_url)
     search_response_text = search_response.text
 
     soup = BeautifulSoup(search_response_text, "html.parser")
-    valid_links = []
+    valid_link = ""
     for link in soup.findAll('a'):
         if link.get('href').startswith('/url?q='):
-            link_to_send = link.get('href')[7:]
-            break;
+            candidate = urllib.parse.unquote(link.get('href')[7:])
+            if candidate.find("/settings/ads/preferences") != 0: # could just be "/" to filter out all local links to google.com
+                valid_link = candidate.split('&')[0]
+                break;
 
-    link_to_send = urllib.parse.unquote(link_to_send[:link_to_send.index('&')])
-
-    return link_to_send
-
+    return valid_link
 
 async def image_search(message, client):
     search_query = message.content[3:].strip(' ')
